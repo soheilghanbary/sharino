@@ -47,7 +47,7 @@ const NavLinks = () => (
 
 export function Header() {
   return (
-    <header className="border-b p-4">
+    <header className="border-b bg-card p-4">
       <nav className="container mx-auto flex items-center justify-between gap-4">
         <Logo />
         <NavLinks />
