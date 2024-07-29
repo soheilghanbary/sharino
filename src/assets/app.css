@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 215.29, 25%, 26.67%;
+    --card: 0 0% 100%;
+    --card-foreground: 215.29, 25%, 26.67%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215.29, 25%, 26.67%;
+    --primary: 241, 99%, 66%;
+    --primary-foreground: 60 9.1% 97.8%;
+    --secondary: 223, 78%, 98%;
+    --secondary-foreground: 24 9.8% 10%;
+    --muted: 223, 78%, 98%;
+    --muted-foreground: 221.69, 29.06%, 39.8%;
+    --accent: 223, 78%, 98%;
+    --accent-foreground: 24 9.8% 10%;
+    --destructive: 330, 100%, 50%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 214, 32%, 91%;
+    --input: 214, 32%, 91%;
+    --ring: 241, 99%, 66%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 0, 0%, 0%;
+    --foreground: 60 9.1% 97.8%;
+    --card: 240, 10%, 4%;
+    --card-foreground: 60 9.1% 97.8%;
+    --popover: 240, 10%, 4%;
+    --popover-foreground: 60 9.1% 97.8%;
+    --primary: 198, 93%, 60%;
+    --primary-foreground: 60 9.1% 97.8%;
+    --secondary: 240, 6%, 10%;
+    --secondary-foreground: 60 9.1% 97.8%;
+    --muted: 240, 6%, 10%;
+    --muted-foreground: 200, 7%, 91%;
+    --accent: 240, 6%, 10%;
+    --accent-foreground: 60 9.1% 97.8%;
+    --destructive: 330, 100%, 50%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 240, 6%, 10%;
+    --input: 240, 6%, 10%;
+    --ring: 198, 93%, 60%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border box-border outline-none select-none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 2px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px hsl(var(--card));
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
