@@ -1,22 +1,23 @@
+import { db } from "@/server/db";
 import {
   type DefaultUser,
   type NextAuthOptions,
   getServerSession,
-} from "next-auth"
-import GithubProvider from "next-auth/providers/github"
-import GoogleProvider from "next-auth/providers/google"
+} from "next-auth";
+import GithubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 
 declare module "next-auth" {
   interface Session {
     user?: DefaultUser & {
-      id: string
-    }
+      id: string;
+    };
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    uid: string
+    uid: string;
   }
 }
 
@@ -51,36 +52,35 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    // signIn: async ({ user }) => {
-    //   // check user exist on database
-    //   const exist = await db.user.findFirst({ where: { id: user.id } })
-    //   if (exist) return true
-    //   // create user
-    //   await db.user.create({
-    //     data: {
-    //       id: user.id,
-    //       name: user.name!,
-    //       email: user.email!,
-    //       image: user.image!,
-    //       username: user.id,
-    //     },
-    //   })
-    //   return true
-    // },
+    signIn: async ({ user }) => {
+      // check user exist on database
+      const exist = await db.user.findFirst({ where: { id: user.id } });
+      if (exist) return true;
+      // create user
+      await db.user.create({
+        data: {
+          id: user.id,
+          name: user.name!,
+          email: user.email!,
+          image: user.image!,
+        },
+      });
+      return true;
+    },
     session: async ({ session, token }) => {
       if (session?.user) {
-        session.user.id = token.uid
+        session.user.id = token.uid;
       }
-      return session
+      return session;
     },
     jwt: async ({ token, user, trigger, session }) => {
       if (user) {
-        token.uid = user.id
+        token.uid = user.id;
       }
       if (trigger === "update") {
-        return { ...token, ...session.user }
+        return { ...token, ...session.user };
       }
-      return { ...token, ...user }
+      return { ...token, ...user };
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
@@ -91,9 +91,9 @@ export const authOptions: NextAuthOptions = {
     signIn: "/sign-in",
     error: "/api/auth/error",
   },
-}
+};
 
 export const getUserSession = async () => {
-  const session = await getServerSession(authOptions)
-  return session?.user || null
-}
+  const session = await getServerSession(authOptions);
+  return session?.user || null;
+};
