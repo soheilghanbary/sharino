@@ -1,4 +1,12 @@
 'use client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import { useLinkStore } from '@/store/link-store';
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import {
@@ -7,54 +15,146 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ExpandIcon, TrashIcon } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Edit2Icon, ExpandIcon, PlusCircleIcon, TrashIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { TextField } from '../text-field';
 import { Button } from '../ui/button';
 
-export function LinkList() {
-  const { links, addLink, moveLink } = useLinkStore();
+const linkSchema = z.object({
+  name: z.string().min(1),
+  url: z.string().min(1),
+});
 
+type LinkSchema = z.infer<typeof linkSchema>;
+
+const AddLinkModal = () => {
+  const addLink = useLinkStore((state) => state.addLink);
+  const [open, setOpen] = useState(false);
+  const { register, reset, handleSubmit } = useForm<LinkSchema>({
+    resolver: zodResolver(linkSchema),
+    defaultValues: { name: '', url: '' },
+  });
+  const onSubmit = handleSubmit((data) => {
+    addLink(data);
+    setOpen(false);
+    reset();
+  });
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant={'default'} className="w-fit">
+          <PlusCircleIcon className="ml-2 size-4" />
+          افزودن لینک
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>افزودن لینک جدید</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="grid gap-4">
+          <TextField label="نام سایت" {...register('name')} />
+          <TextField label="آدرس" dir="ltr" {...register('url')} />
+          <div className="grid grid-cols-2 gap-4">
+            <Button>افزودن</Button>
+            <Button
+              type="button"
+              variant={'secondary'}
+              onClick={() => setOpen(false)}
+            >
+              انصراف
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const EditLinkModal = (link: LinkProps) => {
+  const { updateLink } = useLinkStore();
+  const [open, setOpen] = useState(false);
+  const { register, reset, handleSubmit } = useForm<LinkSchema>({
+    resolver: zodResolver(linkSchema),
+    defaultValues: { name: link.name, url: link.url },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({ name: link.name, url: link.url });
+    }
+  }, [open, link, reset]);
+
+  const onSubmit = handleSubmit((data) => {
+    updateLink(link.id, data.name, data.url);
+    setOpen(false);
+    reset();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size={'icon'} className="size-8" variant={'green'}>
+          <Edit2Icon className="size-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>ویرایش لینک</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="grid gap-4">
+          <TextField label="نام سایت" {...register('name')} />
+          <TextField label="آدرس" dir="ltr" {...register('url')} />
+          <div className="grid grid-cols-2 gap-4">
+            <Button>بروزرسانی</Button>
+            <Button
+              type="button"
+              variant={'secondary'}
+              onClick={() => setOpen(false)}
+            >
+              انصراف
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export function LinkList() {
+  const { links, moveLink } = useLinkStore();
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
       moveLink(active.id as string, over?.id as string);
     }
   };
-
   return (
     <>
-      <Button variant={'default'} onClick={addLink}>
-        افزودن لینک
-      </Button>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={links} strategy={verticalListSortingStrategy}>
           {links.map((link) => (
-            <LinkItem key={link.id} id={link.id} />
+            <LinkItem key={link.id} {...link} />
           ))}
         </SortableContext>
       </DndContext>
+      <AddLinkModal />
     </>
   );
 }
 
-const LinkItem: React.FC<{ id: string }> = ({ id }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-  const { links, updateLink } = useLinkStore();
-  const link = links.find((link) => link.id === id);
-
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (link) {
-      updateLink(id, e.target.value, link.url);
-    }
-  };
-
-  const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (link) {
-      updateLink(id, link.name, e.target.value);
-    }
-  };
+const LinkItem = ({ id, name, url }: LinkProps) => {
+  const { deleteLink } = useLinkStore();
+  const {
+    attributes,
+    listeners,
+    isDragging,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -63,33 +163,35 @@ const LinkItem: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <div
-      ref={setNodeRef}
       style={style}
-      className="space-y-4 rounded-lg border bg-card p-4"
+      ref={setNodeRef}
+      className={cn(
+        'mb-2 flex items-center justify-between gap-2 rounded-md border bg-background p-2.5',
+        { 'bg-muted': isDragging },
+      )}
       {...attributes}
     >
-      <div className="flex items-center justify-end gap-4">
-        <Button size={'icon'} variant={'destructive'}>
-          <TrashIcon className="size-4" />
-        </Button>
-        <Button size={'icon'} variant={'secondary'} {...listeners}>
-          <ExpandIcon className="size-4" />
-        </Button>
+      <div className="flex flex-1 flex-col">
+        <p className="font-semibold text-sm/6">{name}</p>
+        <p className="text-muted-foreground text-xs">{url}</p>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <TextField
-          className="flex-1"
-          label="عنوان سایت"
-          value={link?.name || ''}
-          onChange={handleNameChange}
-        />
-        <TextField
-          dir="ltr"
-          label="آدرس"
-          value={link?.url || ''}
-          onChange={handleUrlChange}
-        />
-      </div>
+      <Button
+        size={'icon'}
+        className="size-8"
+        variant={'destructive'}
+        onClick={() => deleteLink(id)}
+      >
+        <TrashIcon className="size-3.5" />
+      </Button>
+      <EditLinkModal {...{ name, url, id }} />
+      <Button
+        size={'icon'}
+        className="size-8"
+        variant={'secondary'}
+        {...listeners}
+      >
+        <ExpandIcon key={id} className="size-3.5" />
+      </Button>
     </div>
   );
 };

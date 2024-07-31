@@ -1,26 +1,27 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import { create } from "zustand";
 
-interface Link {
+interface LinkProps {
   id: string;
   name: string;
   url: string;
 }
 
 interface LinkState {
-  links: Link[];
-  addLink: () => void;
+  links: LinkProps[];
+  addLink: ({ name, url }: { name: string; url: string }) => void;
   updateLink: (id: string, name: string, url: string) => void;
   moveLink: (activeId: string, overId: string) => void;
+  deleteLink: (id: string) => void;
 }
 
 export const useLinkStore = create<LinkState>((set) => ({
   links: [],
-  addLink: () =>
+  addLink: (values) =>
     set((state) => ({
       links: [
         ...state.links,
-        { id: new Date().getTime().toString(), name: "", url: "" },
+        { id: new Date().getTime().toString(), ...values },
       ],
     })),
   updateLink: (id, name, url) =>
@@ -37,4 +38,8 @@ export const useLinkStore = create<LinkState>((set) => ({
         links: arrayMove(state.links, oldIndex, newIndex),
       };
     }),
+  deleteLink: (id) =>
+    set((state) => ({
+      links: state.links.filter((link) => link.id !== id),
+    })),
 }));
