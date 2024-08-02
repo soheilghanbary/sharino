@@ -1,4 +1,5 @@
 'use client';
+import { addLink as addLinkAction } from '@/actions';
 import {
   Dialog,
   DialogContent,
@@ -17,8 +18,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Edit2Icon, ExpandIcon, PlusCircleIcon, TrashIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { TextField } from '../text-field';
 import { Button } from '../ui/button';
@@ -31,6 +33,7 @@ const linkSchema = z.object({
 type LinkSchema = z.infer<typeof linkSchema>;
 
 const AddLinkModal = () => {
+  const [pending, mutate] = useTransition();
   const addLink = useLinkStore((state) => state.addLink);
   const [open, setOpen] = useState(false);
   const { register, reset, handleSubmit } = useForm<LinkSchema>({
@@ -38,6 +41,13 @@ const AddLinkModal = () => {
     defaultValues: { name: '', url: '' },
   });
   const onSubmit = handleSubmit((data) => {
+    mutate(async () => {
+      await addLinkAction({
+        ...data,
+        id: new Date().getMilliseconds().toString(),
+      });
+      toast.success('لینک با موفقیت اضافه شد');
+    });
     addLink(data);
     setOpen(false);
     reset();
@@ -123,14 +133,16 @@ const EditLinkModal = (link: LinkProps) => {
   );
 };
 
-export function LinkList() {
+export function LinkList({ links: initialLinks }: any) {
   const { links, moveLink } = useLinkStore();
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
       moveLink(active.id as string, over?.id as string);
     }
   };
+
   return (
     <>
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
